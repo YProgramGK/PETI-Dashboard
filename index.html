@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard SGSI UTS</title>
+<style>
+:root{
+  --bg:#F5F3EC; --card:#FFFFFF; --ink:#1E2420; --ink2:#52514E; --muted:#6B6F68;
+  --line:#E2DED3; --grid:#EEEBE3; --track:#FAF9F5; --band:#1F2A44; --band-ink:#FFFFFF;
+  --gold:#B8860B; --now:rgba(42,120,214,.10); --now-line:#2A78D6;
+  --s-pend:#D4D1C7; --s-pend-ink:#1E2420; --s-prog:#2A78D6; --s-done:#0CA30C; --s-late:#D03B3B;
+  --plan:#8A8880; --real:#2A78D6; --bar:#2A78D6;
+  --chip:#F0EEE7; --chip-on:#1F2A44; --chip-on-ink:#FFFFFF;
+  --warn-bg:#FFF4D6; --warn-line:#E0B341; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141413; --card:#1F1F1D; --ink:#F0EFEC; --ink2:#C3C2B7; --muted:#9B9A92;
+    --line:#34332F; --grid:#2A2A27; --track:#232321; --band:#1B2438; --band-ink:#F0EFEC;
+    --gold:#E0B341; --now:rgba(57,135,229,.18); --now-line:#3987E5;
+    --s-pend:#4A4945; --s-pend-ink:#F0EFEC; --s-prog:#3987E5; --s-done:#0CA30C; --s-late:#D03B3B;
+    --plan:#9B9A92; --real:#3987E5; --bar:#3987E5;
+    --chip:#2A2A27; --chip-on:#3987E5; --chip-on-ink:#0B0B0B;
+    --warn-bg:#3A3020; --warn-line:#C99A2E; --shadow:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141413; --card:#1F1F1D; --ink:#F0EFEC; --ink2:#C3C2B7; --muted:#9B9A92;
+  --line:#34332F; --grid:#2A2A27; --track:#232321; --band:#1B2438; --band-ink:#F0EFEC;
+  --gold:#E0B341; --now:rgba(57,135,229,.18); --now-line:#3987E5;
+  --s-pend:#4A4945; --s-pend-ink:#F0EFEC; --s-prog:#3987E5; --s-done:#0CA30C; --s-late:#D03B3B;
+  --plan:#9B9A92; --real:#3987E5; --bar:#3987E5;
+  --chip:#2A2A27; --chip-on:#3987E5; --chip-on-ink:#0B0B0B;
+  --warn-bg:#3A3020; --warn-line:#C99A2E; --shadow:0 1px 2px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",Inter,system-ui,-apple-system,Roboto,Arial,sans-serif}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--now-line);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;padding:0 16px 32px}
+
+/* Header */
+header.top{background:var(--band);color:var(--band-ink)}
+header.top .wrap{padding-top:20px;padding-bottom:18px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:flex-end;justify-content:space-between}
+.title h1{margin:0;font-size:26px;line-height:1.15;letter-spacing:-.01em}
+.title p{margin:6px 0 0;font-size:12.5px;opacity:.82;max-width:760px}
+.title .sol{display:inline-block;margin-top:8px;font-size:12px;background:rgba(255,255,255,.12);padding:3px 10px;border-radius:999px}
+.ctrls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.ctrl label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.8;margin-bottom:4px}
+.ctrl input[type=date]{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:var(--band-ink);border-radius:8px;padding:7px 10px;color-scheme:dark}
+.weeksel{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:3px}
+.weeksel button{background:transparent;border:0;color:var(--band-ink);width:36px;height:32px;border-radius:6px;font-size:14px}
+.weeksel button:hover{background:rgba(255,255,255,.15)}
+.weeksel button:disabled{opacity:.35;cursor:default}
+.weeksel output{min-width:44px;text-align:center;font-weight:700}
+
+/* Toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 14px;min-height:40px;display:inline-flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--band);color:var(--band-ink);border-color:var(--band)}
+.btn.danger{color:var(--s-late)}
+.btn[aria-pressed="true"]{outline:2px solid var(--gold);outline-offset:-1px}
+.btn svg{width:16px;height:16px;flex-shrink:0}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px}
+.card h2{margin:0;font-size:16px}
+.card .sub{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.card-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:14px}
+section{margin-top:16px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
+.kpi{padding:16px 18px}
+.kpi .lab{font-size:12px;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
+.kpi .val{font-size:30px;font-weight:700;line-height:1.1;margin-top:6px;font-variant-numeric:tabular-nums}
+.kpi .note{font-size:12px;color:var(--muted);margin-top:4px}
+.prog{height:8px;background:var(--grid);border-radius:999px;margin-top:10px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--s-done);border-radius:999px;transition:width .3s}
+.split{display:flex;gap:14px;margin-top:8px;font-variant-numeric:tabular-nums}
+.split div{font-size:12px;color:var(--ink2)}
+.split b{display:block;font-size:22px;color:var(--ink)}
+.kpi.alert .val{color:var(--s-late)}
+
+/* Status badge */
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--line);white-space:nowrap;background:var(--card)}
+.st .dot{width:10px;height:10px;border-radius:50%}
+.prio{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px}
+.prio.Alta{background:#F8CBAD;color:#7A1414}
+.prio.Media{background:#FFF0C2;color:#5C4500}
+.prio.Baja{background:#DCEFD2;color:#1E4D14}
+.crit-tag{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:var(--gold);white-space:nowrap}
+
+/* Gantt */
+.gantt-scroll{overflow-x:auto}
+.gantt{display:grid;grid-template-columns:minmax(220px,300px) repeat(8,minmax(70px,1fr));min-width:860px;position:relative}
+.gh{background:var(--band);color:var(--band-ink);text-align:center;padding:8px 4px;font-weight:700;font-size:13px;border-right:1px solid rgba(255,255,255,.12);cursor:pointer;user-select:none}
+.gh small{display:block;font-weight:400;font-size:11px;opacity:.75}
+.gh.first{text-align:left;padding-left:12px;cursor:default;border-radius:8px 0 0 0}
+.gh.last{border-radius:0 8px 0 0}
+.gh.now{box-shadow:inset 0 -3px 0 var(--gold)}
+.gl{padding:9px 12px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;min-height:56px;cursor:pointer}
+.gl:hover{background:var(--track)}
+.gl .num{width:26px;height:26px;border-radius:50%;background:var(--band);color:var(--band-ink);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.gl .t{font-weight:600;font-size:13px;line-height:1.25}
+.gl .r{font-size:11.5px;color:var(--muted);line-height:1.25;margin-top:2px}
+.gt{grid-column:2 / span 8;display:grid;grid-template-columns:repeat(8,1fr);border-bottom:1px solid var(--line);position:relative;align-items:center}
+.gt .cell{grid-row:1;height:100%;border-right:1px solid var(--grid)}
+.gt .cell:nth-child(even){background:var(--track)}
+.gt .cell.now{background:var(--now)}
+.bar{grid-row:1;height:30px;margin:0 3px;border-radius:6px;border:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;position:relative;z-index:1;transition:opacity .2s, box-shadow .2s;box-shadow:0 0 0 2px var(--card)}
+.bar.s-Pendiente{background:var(--s-pend);color:var(--s-pend-ink)}
+.bar.s-EnProgreso{background:var(--s-prog)}
+.bar.s-Terminada{background:var(--s-done)}
+.bar.s-Atrasada{background:var(--s-late)}
+.bar:hover{filter:brightness(1.06)}
+.gantt.critmode .bar{opacity:.25}
+.gantt.critmode .bar.crit{opacity:1;box-shadow:0 0 0 2px var(--card),0 0 0 5px var(--gold)}
+.gantt.critmode .gl:not(.crit){opacity:.45}
+.hito-l{padding:10px 12px;color:var(--s-late);font-weight:700;font-size:13px}
+.hito-t{grid-column:2 / span 8;display:grid;grid-template-columns:repeat(8,1fr);align-items:center}
+.diamond{grid-column:8;justify-self:center;width:18px;height:18px;background:var(--s-late);transform:rotate(45deg);border-radius:2px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--ink2);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+
+/* Filters + table */
+.filters{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:12px}
+.fgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fgroup > span{font-size:12px;color:var(--muted);margin-right:2px}
+.chip{border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:6px 12px;font-size:12.5px;min-height:34px}
+.chip[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-ink);border-color:var(--chip-on)}
+.filters select{max-width:100%;width:min(340px,100%)}
+.filters select,.filters input[type=search]{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 10px;min-height:36px}
+.filters input[type=search]{min-width:200px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{text-align:left;font-size:12px;color:var(--band-ink);background:var(--band);padding:10px;font-weight:600}
+th:first-child{border-radius:8px 0 0 0}th:last-child{border-radius:0 8px 0 0}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--track)}
+td.c{text-align:center}
+.empty{padding:24px;text-align:center;color:var(--muted)}
+
+/* Charts */
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.axis text,.lbl{fill:var(--muted);font-size:11px}
+.vlab{fill:var(--ink);font-size:11.5px;font-weight:600}
+.gridline{stroke:var(--grid);stroke-width:1}
+.donut-wrap{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.donut-wrap svg{width:190px;flex-shrink:0}
+.dlegend{display:flex;flex-direction:column;gap:8px;font-size:13px}
+.dlegend div{display:flex;align-items:center;gap:8px}
+.dlegend b{margin-left:auto;padding-left:16px;font-variant-numeric:tabular-nums}
+
+/* Tooltip */
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:10px 12px;font-size:12.5px;max-width:320px;opacity:0;transition:opacity .12s}
+#tip.on{opacity:1}
+#tip .h{font-weight:700;margin-bottom:4px}
+#tip .row{display:flex;justify-content:space-between;gap:14px;color:var(--ink2)}
+#tip .row b{color:var(--ink);font-weight:600;text-align:right}
+
+/* Dialog */
+dialog{border:0;border-radius:14px;padding:0;max-width:640px;width:calc(100% - 32px);background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,14,24,.55)}
+.dlg-head{background:var(--band);color:var(--band-ink);padding:16px 20px;display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.dlg-head h3{margin:0;font-size:17px;line-height:1.3}
+.dlg-head .x{background:transparent;border:0;color:var(--band-ink);font-size:22px;width:40px;height:40px;border-radius:8px;flex-shrink:0}
+.dlg-head .x:hover{background:rgba(255,255,255,.15)}
+.dlg-body{padding:18px 20px 20px}
+.info{display:grid;grid-template-columns:140px 1fr;gap:8px 12px;font-size:13px}
+.info dt{color:var(--muted)}
+.info dd{margin:0}
+.block{margin-top:18px}
+.block h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{border:1px solid var(--line);background:var(--chip);border-radius:8px;padding:8px 14px;min-height:40px;display:inline-flex;gap:8px;align-items:center}
+.seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-ink);border-color:var(--chip-on)}
+.stepper{display:flex;gap:18px;flex-wrap:wrap}
+.stepper .s{display:flex;align-items:center;gap:6px}
+.stepper .s span{font-size:12.5px;color:var(--ink2);min-width:84px}
+.stepper button{width:40px;height:40px;border:1px solid var(--line);background:var(--chip);border-radius:8px;font-size:18px}
+.stepper output{min-width:34px;text-align:center;font-weight:700}
+.deps{display:flex;flex-wrap:wrap;gap:6px}
+.warn{margin-top:14px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:10px;padding:12px 14px;font-size:13px}
+.warn .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+footer{margin-top:22px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+
+/* Presentation mode */
+body.present .toolbar .hide-present, body.present #tableSec, body.present #chartsSec, body.present footer, body.present .ctrls{display:none}
+body.present .kpi .val{font-size:40px}
+body.present .gl{min-height:68px}
+body.present .gl .t{font-size:15px}
+body.present .bar{height:38px;font-size:14px}
+body.present .wrap{max-width:1600px}
+@media (max-width:640px){
+  .title h1{font-size:21px}
+  .info{grid-template-columns:1fr}
+}
+@media (forced-colors: active){
+  .bar{border:2px solid CanvasText}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="title">
+      <h1>Implementación del SGSI – Seguridad de la información en las UTS</h1>
+      <p>Selección y Evaluación de Tecnologías · TSI604 – B192 · Kevin Santiago Acosta Castro, Yarin Jaziel Angulo Angulo y Cristopher Barrios Rueda · Bucaramanga, 2026-2</p>
+      <span class="sol">Solución: Microsoft Entra ID P1 + Defender y Purview · 4,40 / 5 en la matriz de decisión</span>
+    </div>
+    <div class="ctrls">
+      <div class="ctrl">
+        <label for="startDate">Inicio del proyecto</label>
+        <input type="date" id="startDate">
+      </div>
+      <div class="ctrl">
+        <label id="wkLab">Semana actual</label>
+        <div class="weeksel" role="group" aria-labelledby="wkLab">
+          <button id="wkPrev" aria-label="Semana anterior">◀</button>
+          <output id="wkOut">S1</output>
+          <button id="wkNext" aria-label="Semana siguiente">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="toolbar">
+    <button class="btn primary hide-present" id="bSim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 3l14 9-14 9V3z"/></svg>Simular avance</button>
+    <button class="btn" id="bCrit" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Resaltar ruta crítica</button>
+    <button class="btn hide-present" id="bCsv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>Exportar CSV</button>
+    <button class="btn" id="bPres" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Modo presentación</span></button>
+    <button class="btn hide-present" id="bTheme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>Tema</button>
+    <button class="btn danger hide-present" id="bReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 109-9M3 4v5h5"/></svg>Reiniciar</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="card" id="ganttSec">
+    <div class="card-head">
+      <div>
+        <h2>Cronograma de implementación</h2>
+        <p class="sub">Haz clic en una barra o actividad para ver el detalle y cambiar su estado. Haz clic en una semana del encabezado para marcarla como semana actual.</p>
+      </div>
+    </div>
+    <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
+    <div class="legend" id="ganttLegend"></div>
+  </section>
+
+  <section class="card" id="tableSec">
+    <div class="card-head">
+      <div>
+        <h2>Lista de actividades</h2>
+        <p class="sub" id="tableCount"></p>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="fgroup" id="fPrio"><span>Prioridad</span></div>
+      <div class="fgroup" id="fEst"><span>Estado</span></div>
+      <select id="fResp" aria-label="Filtrar por responsable"></select>
+      <input type="search" id="fQ" placeholder="Buscar actividad…" aria-label="Buscar actividad">
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>#</th><th>Prioridad</th><th>Actividad / Tarea</th><th>Responsable</th><th>Depende de</th><th>Duración</th><th>Semanas</th><th>Estado</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="charts" id="chartsSec">
+    <div class="card chart">
+      <div class="card-head"><div><h2>Actividades por estado</h2><p class="sub">Conteo de las 10 actividades</p></div></div>
+      <div class="donut-wrap"><svg id="donut" viewBox="0 0 200 200" role="img" aria-label="Actividades por estado"></svg><div class="dlegend" id="dLegend"></div></div>
+    </div>
+    <div class="card chart">
+      <div class="card-head"><div><h2>Días de trabajo por responsable</h2><p class="sub">Suma de la duración de sus actividades</p></div></div>
+      <svg id="bars" role="img" aria-label="Días de trabajo por responsable"></svg>
+    </div>
+    <div class="card chart">
+      <div class="card-head"><div><h2>Avance planeado vs. real</h2><p class="sub">% acumulado de días de trabajo al cierre de cada semana</p></div></div>
+      <svg id="curve" role="img" aria-label="Avance planeado versus real"></svg>
+      <div class="legend" id="curveLegend"></div>
+    </div>
+  </section>
+
+  <footer>Fuente: PETI 2026 de las UTS y talleres del equipo (2026-2). Duraciones y fecha de inicio son estimaciones del equipo. El avance pondera cada actividad por sus días: Terminada = 100 %, En progreso = 50 %. Los cambios se guardan en este navegador.</footer>
+</main>
+
+<div id="tip" role="tooltip"></div>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="dlg-head"><h3 id="dlgTitle"></h3><button class="x" id="dlgX" aria-label="Cerrar">×</button></div>
+  <div class="dlg-body" id="dlgBody"></div>
+</dialog>
+
+<script>
+(function(){
+"use strict";
+const KEY = "sgsi-uts-dashboard-v1";
+const DEFAULT_START = "2027-01-18";
+const CRIT = [1,2,3,4,6,8,9,10];
+const STATES = ["Pendiente","En progreso","Terminada"];
+const ICON = {"Pendiente":"○","En progreso":"↻","Terminada":"✓","Atrasada":"!"};
+const DEFAULT_ACTS = [
+ {id:1,fase:"Análisis",act:"Analizar el estado actual: inventario de sistemas, usuarios y roles, y confirmar el alcance normativo del SGSI (R3, R4)",resp:"Equipo de proyecto / Oficina de Recursos Informáticos",prio:"Media",dep:[],dias:5,ini:1,fin:1,estado:"Pendiente"},
+ {id:2,fase:"Licenciamiento y contrato",act:"Adquirir las licencias académicas (Entra ID P1, Defender y Purview) y firmar contrato con SLA ≥ 99 % y plan de salida (R1, R5)",resp:"Área de contratación UTS / Partner Microsoft",prio:"Media",dep:[1],dias:5,ini:2,fin:2,estado:"Pendiente"},
+ {id:3,fase:"Instalación y migración",act:"Instalar y configurar el tenant y migrar las cuentas institucionales al directorio (Entra Connect)",resp:"Proveedor / Equipo técnico de TI",prio:"Media",dep:[2],dias:5,ini:3,fin:3,estado:"Pendiente"},
+ {id:4,fase:"Configuración MFA, accesos y cifrado",act:"Implementar la autenticación MFA, el control de accesos por rol y el cifrado de la información (RF-01, RF-03, RNF-01)",resp:"Equipo técnico de TI / Proveedor",prio:"Alta",dep:[3],dias:10,ini:4,fin:5,estado:"Pendiente"},
+ {id:5,fase:"Monitoreo y protección de datos",act:"Configurar el registro de eventos, las alertas de accesos no autorizados y la clasificación de datos (RF-02, RF-04, RF-05)",resp:"Oficina de Recursos Informáticos",prio:"Media",dep:[3],dias:8,ini:4,fin:5,estado:"Pendiente"},
+ {id:6,fase:"Integración SSO (piloto)",act:"Integrar el inicio de sesión único con un sistema académico piloto (RF-06, RNF-05, R4)",resp:"Equipo técnico de TI / Proveedor",prio:"Media",dep:[4],dias:5,ini:6,fin:6,estado:"Pendiente"},
+ {id:7,fase:"Capacitación",act:"Capacitar y sensibilizar a docentes, administrativos y estudiantes en seguridad y uso del MFA (R2)",resp:"Talento Humano / Oficina de TI",prio:"Media",dep:[4],dias:7,ini:6,fin:7,estado:"Pendiente"},
+ {id:8,fase:"Pruebas",act:"Ejecutar pruebas de autenticación, permisos por rol, disponibilidad y tiempos de respuesta (RNF-02, RNF-03, RNF-04)",resp:"Equipo de proyecto / Oficina de TI",prio:"Media",dep:[5,6],dias:5,ini:7,fin:7,estado:"Pendiente"},
+ {id:9,fase:"Go-Live",act:"Activar la solución para toda la comunidad UTS con acompañamiento de la mesa de ayuda",resp:"Oficina de TI / Mesa de ayuda",prio:"Media",dep:[7,8],dias:3,ini:8,fin:8,estado:"Pendiente"},
+ {id:10,fase:"Aceptación y cierre",act:"Firmar el acta de aceptación y entregar la documentación del SGSI (hito)",resp:"Dirección de TI (cliente) / Equipo de proyecto",prio:"Baja",dep:[9],dias:2,ini:8,fin:8,estado:"Pendiente"}
+];
+const clone = o => JSON.parse(JSON.stringify(o));
+function fresh(){ return {start:DEFAULT_START, week:1, acts:clone(DEFAULT_ACTS)}; }
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && Array.isArray(s.acts) && s.acts.length===10) return s; }catch(e){}
+  return null;
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+let S = load() || fresh();
+const UI = {crit:false, prio:"Todas", est:"Todos", resp:"", q:"", sel:null, pending:null};
+try{ const t = localStorage.getItem(KEY+"-theme"); if(t) document.documentElement.dataset.theme = t; }catch(e){}
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const byId = id => S.acts.find(a => a.id===id);
+const totalDays = () => S.acts.reduce((t,a)=>t+a.dias,0);
+function status(a){ if(a.estado==="Terminada") return "Terminada"; if(a.fin < S.week) return "Atrasada"; return a.estado; }
+function credit(a){ return a.estado==="Terminada" ? a.dias : a.estado==="En progreso" ? a.dias*0.5 : 0; }
+function d0(){ const [y,m,d] = (S.start||DEFAULT_START).split("-").map(Number); return new Date(y,m-1,d); }
+function addDays(dt,n){ const x = new Date(dt); x.setDate(x.getDate()+n); return x; }
+const monday = w => addDays(d0(), (w-1)*7);
+const friday = w => addDays(d0(), (w-1)*7+4);
+const fmt = (d, y=true) => String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+(y?"/"+d.getFullYear():"");
+const pct = x => (Math.round(x*10)/10).toLocaleString("es-CO") + " %";
+const stColor = st => ({"Pendiente":"var(--s-pend)","En progreso":"var(--s-prog)","Terminada":"var(--s-done)","Atrasada":"var(--s-late)"}[st]);
+const badge = st => `<span class="st"><span class="dot" style="background:${stColor(st)}"></span>${ICON[st]} ${st}</span>`;
+
+/* Tooltip */
+const tip = $("tip");
+function showTip(html, ev){ tip.innerHTML = html; tip.classList.add("on"); moveTip(ev); }
+function moveTip(ev){
+  if(!ev) return;
+  const r = tip.getBoundingClientRect();
+  let x = (ev.clientX ?? 0) + 14, y = (ev.clientY ?? 0) + 14;
+  if(ev.clientX===undefined && ev.target){ const b = ev.target.getBoundingClientRect(); x = b.left; y = b.bottom + 8; }
+  if(x + r.width > innerWidth - 8) x = innerWidth - r.width - 8;
+  if(y + r.height > innerHeight - 8) y = (ev.clientY ?? y) - r.height - 14;
+  tip.style.left = Math.max(8,x)+"px"; tip.style.top = Math.max(8,y)+"px";
+}
+function hideTip(){ tip.classList.remove("on"); }
+const row = (k,v) => `<div class="row"><span>${k}</span><b>${v}</b></div>`;
+function actTip(a){
+  return `<div class="h">${a.id}. ${esc(a.fase)}</div>` + row("Responsable", esc(a.resp)) + row("Duración", a.dias+" días") +
+    row("Semanas", a.ini===a.fin ? "S"+a.ini : "S"+a.ini+" – S"+a.fin) + row("Fechas", fmt(monday(a.ini),false)+" al "+fmt(friday(a.fin))) +
+    row("Depende de", a.dep.length ? a.dep.join(", ") : "—") + row("Estado", ICON[status(a)]+" "+status(a));
+}
+function bindTip(el, fn){
+  el.addEventListener("mouseenter", e => showTip(fn(), e));
+  el.addEventListener("mousemove", moveTip);
+  el.addEventListener("mouseleave", hideTip);
+  el.addEventListener("focus", e => { if(e.target.matches(":focus-visible")) showTip(fn(), e); });
+  el.addEventListener("blur", hideTip);
+}
+
+/* Header controls */
+function renderHeader(){
+  $("startDate").value = S.start;
+  $("wkOut").textContent = "S"+S.week;
+  $("wkPrev").disabled = S.week<=1; $("wkNext").disabled = S.week>=8;
+}
+
+/* KPIs */
+function renderKPIs(){
+  const tot = totalDays();
+  const done = S.acts.reduce((t,a)=>t+credit(a),0);
+  const p = tot ? done/tot*100 : 0;
+  const c = {"Terminada":0,"En progreso":0,"Pendiente":0,"Atrasada":0};
+  S.acts.forEach(a => c[status(a)]++);
+  const late = S.acts.filter(a => status(a)==="Atrasada");
+  const critLeft = S.acts.filter(a => CRIT.includes(a.id) && a.estado!=="Terminada").reduce((t,a)=>t+a.dias,0);
+  const lastFin = Math.max(...S.acts.map(a=>a.fin));
+  $("kpis").innerHTML = `
+    <div class="card kpi"><div class="lab">Avance general</div><div class="val">${pct(p)}</div>
+      <div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(p)}"><i style="width:${p}%"></i></div>
+      <div class="note">${Math.round(done*10)/10} de ${tot} días de trabajo</div></div>
+    <div class="card kpi"><div class="lab">Actividades</div>
+      <div class="split"><div><b>${c["Terminada"]}</b>✓ Terminadas</div><div><b>${c["En progreso"]}</b>◐ En progreso</div><div><b>${c["Pendiente"]}</b>○ Pendientes</div></div></div>
+    <div class="card kpi ${late.length?"alert":""}"><div class="lab">Actividades atrasadas</div><div class="val">${late.length ? "! "+late.length : "0"}</div>
+      <div class="note">${late.length ? "Actividad"+(late.length>1?"es":"")+" "+late.map(a=>"#"+a.id).join(", ")+" sin terminar" : "Ninguna a la semana S"+S.week}</div></div>
+    <div class="card kpi"><div class="lab">Días restantes ruta crítica</div><div class="val">${critLeft}</div>
+      <div class="note">Ruta 1→2→3→4→6→8→9→10 (40 días)</div></div>
+    <div class="card kpi"><div class="lab">Entrega final</div><div class="val" style="font-size:24px">${fmt(friday(lastFin))}</div>
+      <div class="note">Viernes de la semana S${lastFin} · ◆ hito de aceptación</div></div>`;
+}
+
+/* Gantt */
+function renderGantt(){
+  const g = $("gantt");
+  g.classList.toggle("critmode", UI.crit);
+  let h = `<div class="gh first">Fase / Actividad</div>`;
+  for(let w=1; w<=8; w++){
+    h += `<div class="gh ${w===8?"last":""} ${w===S.week?"now":""}" data-week="${w}" role="button" tabindex="0" aria-label="Marcar S${w} como semana actual">S${w}<small>${fmt(monday(w),false)}</small></div>`;
+  }
+  S.acts.forEach(a => {
+    const st = status(a), crit = CRIT.includes(a.id);
+    h += `<div class="gl ${crit?"crit":""}" data-id="${a.id}" role="button" tabindex="0"><span class="num">${a.id}</span><div><div class="t">${esc(a.fase)}${a.prio==="Alta"?' <span class="crit-tag">★ Más crítica</span>':""}</div><div class="r">${esc(a.resp)}</div></div></div>`;
+    h += `<div class="gt">`;
+    for(let w=1; w<=8; w++) h += `<div class="cell ${w===S.week?"now":""}" style="grid-column:${w}"></div>`;
+    h += `<button class="bar s-${st.replace(/\s+(\w)/g,(m,c)=>c.toUpperCase())} ${crit?"crit":""}" data-id="${a.id}" style="grid-column:${a.ini} / ${a.fin+1}" aria-label="${esc(a.fase)}: ${st}, S${a.ini} a S${a.fin}">${ICON[st]} ${a.dias} d</button></div>`;
+  });
+  h += `<div class="hito-l">◆ Hito de aceptación (semana 8)</div><div class="hito-t"><span class="diamond" title="Hito de aceptación"></span></div>`;
+  g.innerHTML = h;
+  g.querySelectorAll(".bar").forEach(b => {
+    const a = byId(+b.dataset.id);
+    bindTip(b, () => actTip(byId(a.id)));
+    b.addEventListener("click", () => { hideTip(); openDlg(a.id); });
+  });
+  g.querySelectorAll(".gl").forEach(el => {
+    const go = () => openDlg(+el.dataset.id);
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
+  });
+  g.querySelectorAll(".gh[data-week]").forEach(el => {
+    const go = () => { S.week = +el.dataset.week; commit(); };
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
+  });
+  $("ganttLegend").innerHTML = ["Pendiente","En progreso","Terminada","Atrasada"].map(s=>`<span><i class="sw" style="background:${stColor(s)}"></i>${ICON[s]} ${s}</span>`).join("") +
+    `<span><i class="sw" style="background:var(--now)"></i>Semana actual (S${S.week})</span><span><i class="sw" style="border:3px solid var(--gold)"></i>Ruta crítica (botón)</span>`;
+}
+
+/* Filters + table */
+function chipGroup(el, label, opts, key){
+  el.innerHTML = `<span>${label}</span>` + opts.map(o => `<button class="chip" data-v="${o}" aria-pressed="${UI[key]===o}">${o}</button>`).join("");
+  el.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => { UI[key] = b.dataset.v; renderFilters(); renderTable(); }));
+}
+function renderFilters(){
+  chipGroup($("fPrio"), "Prioridad", ["Todas","Alta","Media","Baja"], "prio");
+  chipGroup($("fEst"), "Estado", ["Todos","Pendiente","En progreso","Terminada","Atrasada"], "est");
+  const resps = [...new Set(S.acts.map(a=>a.resp))].sort((a,b)=>a.localeCompare(b,"es"));
+  $("fResp").innerHTML = `<option value="">Todos los responsables</option>` + resps.map(r=>`<option ${UI.resp===r?"selected":""}>${esc(r)}</option>`).join("");
+}
+function renderTable(){
+  const q = UI.q.trim().toLowerCase();
+  const rows = S.acts.filter(a =>
+    (UI.prio==="Todas" || a.prio===UI.prio) &&
+    (UI.est==="Todos" || status(a)===UI.est) &&
+    (!UI.resp || a.resp===UI.resp) &&
+    (!q || (a.act+" "+a.fase+" "+a.resp).toLowerCase().includes(q)));
+  $("tableCount").textContent = `Mostrando ${rows.length} de ${S.acts.length} actividades · haz clic en una fila para editarla`;
+  $("tbody").innerHTML = rows.length ? rows.map(a => `<tr data-id="${a.id}" tabindex="0">
+    <td class="c"><b>${a.id}</b></td><td><span class="prio ${a.prio}">${a.prio}</span></td>
+    <td>${esc(a.act)}${a.prio==="Alta"?'<span class="crit-tag">★ Más crítica</span>':""}</td>
+    <td>${esc(a.resp)}</td><td class="c">${a.dep.length?a.dep.join(", "):"—"}</td><td class="c">${a.dias} d</td>
+    <td class="c">${a.ini===a.fin?"S"+a.ini:"S"+a.ini+"–S"+a.fin}</td><td>${badge(status(a))}</td></tr>`).join("")
+    : `<tr><td colspan="8" class="empty">Ninguna actividad coincide con los filtros.</td></tr>`;
+  $("tbody").querySelectorAll("tr[data-id]").forEach(tr => {
+    const go = () => openDlg(+tr.dataset.id);
+    tr.addEventListener("click", go);
+    tr.addEventListener("keydown", e => { if(e.key==="Enter"){ go(); } });
+  });
+}
+
+/* Charts */
+const NS = "http://www.w3.org/2000/svg";
+function arc(cx,cy,r0,r1,a0,a1){
+  const p = (r,a) => [cx + r*Math.cos(a), cy + r*Math.sin(a)];
+  const large = a1-a0 > Math.PI ? 1 : 0;
+  const [x0,y0]=p(r1,a0),[x1,y1]=p(r1,a1),[x2,y2]=p(r0,a1),[x3,y3]=p(r0,a0);
+  return `M${x0},${y0} A${r1},${r1} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r0},${r0} 0 ${large} 0 ${x3},${y3} Z`;
+}
+function renderDonut(){
+  const order = ["Terminada","En progreso","Pendiente","Atrasada"];
+  const c = {}; order.forEach(k=>c[k]=0); S.acts.forEach(a=>c[status(a)]++);
+  const tot = S.acts.length; const svg = $("donut");
+  let a0 = -Math.PI/2, h = "";
+  const segs = order.filter(k=>c[k]>0);
+  segs.forEach(k => {
+    const a1 = a0 + c[k]/tot*Math.PI*2;
+    const path = segs.length===1 ? `M100,18 A82,82 0 1 1 99.99,18 Z M100,46 A54,54 0 1 0 100.01,46 Z` : arc(100,100,54,82,a0,a1);
+    h += `<path d="${path}" fill="${stColor(k)}" stroke="var(--card)" stroke-width="2" fill-rule="evenodd" data-k="${k}" tabindex="0"></path>`;
+    a0 = a1;
+  });
+  const done = S.acts.filter(a=>a.estado==="Terminada").length;
+  h += `<text x="100" y="96" text-anchor="middle" style="fill:var(--ink);font-size:30px;font-weight:700">${done}/${tot}</text><text x="100" y="118" text-anchor="middle" class="lbl" style="font-size:12px">terminadas</text>`;
+  svg.innerHTML = h;
+  svg.querySelectorAll("path").forEach(p => bindTip(p, () => `<div class="h">${ICON[p.dataset.k]} ${p.dataset.k}</div>`+row("Actividades", c[p.dataset.k]+" de "+tot)+row("Números", S.acts.filter(a=>status(a)===p.dataset.k).map(a=>"#"+a.id).join(", "))));
+  $("dLegend").innerHTML = order.map(k=>`<div><i class="sw" style="background:${stColor(k)}"></i>${ICON[k]} ${k}<b>${c[k]}</b></div>`).join("");
+}
+function renderBars(){
+  const m = new Map(); S.acts.forEach(a => m.set(a.resp, (m.get(a.resp)||0)+a.dias));
+  const data = [...m.entries()].sort((a,b)=>b[1]-a[1]);
+  const W = Math.max(280, $("bars").parentElement.clientWidth - 36), rowH = 34, top = 6, labW = 0, H = top + data.length*rowH + 22;
+  const svg = $("bars"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const max = Math.max(...data.map(d=>d[1])), sc = (W-40)/Math.ceil(max/5)/5;
+  let h = "";
+  for(let t=0; t<=Math.ceil(max/5)*5; t+=5){ const x = t*sc; h += `<line class="gridline" x1="${x}" x2="${x}" y1="${top}" y2="${H-20}"/><text class="lbl" x="${x}" y="${H-6}" text-anchor="middle">${t}</text>`; }
+  data.forEach(([r,v],i) => {
+    const y = top + i*rowH, w = Math.max(2, v*sc - 1);
+    h += `<text class="lbl" x="0" y="${y+11}" style="fill:var(--ink2)">${esc(r)}</text>`;
+    h += `<path d="M0,${y+16} H${w-4} a4,4 0 0 1 4,4 V${y+26} a4,4 0 0 1 -4,4 H0 Z" fill="var(--bar)" data-r="${esc(r)}" data-v="${v}" tabindex="0"></path>`;
+    h += `<text class="vlab" x="${w+6}" y="${y+28}">${v} d</text>`;
+  });
+  svg.innerHTML = h;
+  svg.querySelectorAll("path").forEach(p => bindTip(p, () => {
+    const acts = S.acts.filter(a=>a.resp===p.dataset.r);
+    return `<div class="h">${p.dataset.r}</div>`+row("Días de trabajo", p.dataset.v)+row("Actividades", acts.map(a=>"#"+a.id).join(", "));
+  }));
+}
+function curveData(){
+  const tot = totalDays(); const plan = [0], real = [0];
+  for(let w=1; w<=8; w++){
+    plan.push(S.acts.filter(a=>a.fin<=w).reduce((t,a)=>t+a.dias,0)/tot*100);
+    if(w < S.week) real.push(S.acts.filter(a=>a.fin<=w).reduce((t,a)=>t+credit(a),0)/tot*100);
+    else if(w === S.week) real.push(S.acts.reduce((t,a)=>t+credit(a),0)/tot*100);
+  }
+  return {plan, real};
+}
+function renderCurve(){
+  const {plan, real} = curveData();
+  const W = Math.max(280, $("curve").parentElement.clientWidth - 36), H = 250, L = 36, R = 74, T = 10, B = 28, iw = W-L-R, ih = H-T-B;
+  const X = i => L + i/8*iw, Y = v => T + ih - v/100*ih;
+  const svg = $("curve"); svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  let h = "";
+  [0,25,50,75,100].forEach(v => h += `<line class="gridline" x1="${L}" x2="${L+iw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="lbl" x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v}%</text>`);
+  for(let i=0;i<=8;i++) h += `<text class="lbl" x="${X(i)}" y="${H-8}" text-anchor="middle">${i===0?"Inicio":"S"+i}</text>`;
+  h += `<rect x="${X(S.week-1)}" y="${T}" width="${iw/8}" height="${ih}" fill="var(--now)"/>`;
+  const line = arr => arr.map((v,i)=>(i?"L":"M")+X(i)+","+Y(v)).join(" ");
+  h += `<path d="${line(plan)}" fill="none" stroke="var(--plan)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  h += `<path d="${line(real)}" fill="none" stroke="var(--real)" stroke-width="2.5"/>`;
+  real.forEach((v,i)=> h += `<circle cx="${X(i)}" cy="${Y(v)}" r="4" fill="var(--real)" stroke="var(--card)" stroke-width="2"/>`);
+  const lp = plan[8], lr = real[real.length-1];
+  let yp = Y(lp)+4, yr = Y(lr)+4; if(Math.abs(yp-yr)<14){ if(yr>=yp) yr = yp+14; else yp = yr+14; }
+  h += `<text class="vlab" x="${X(8)+8}" y="${yp}">Planeado</text>`;
+  h += `<text class="vlab" x="${X(real.length-1)+8}" y="${yr}" style="fill:var(--ink)">Real ${Math.round(lr)}%</text>`;
+  h += `<line id="xh" x1="0" x2="0" y1="${T}" y2="${T+ih}" stroke="var(--muted)" stroke-width="1" opacity="0"/>`;
+  h += `<rect id="hit" x="${L}" y="${T}" width="${iw}" height="${ih}" fill="transparent"/>`;
+  svg.innerHTML = h;
+  const hit = svg.querySelector("#hit"), xh = svg.querySelector("#xh");
+  hit.addEventListener("mousemove", e => {
+    const b = svg.getBoundingClientRect(), sx = (e.clientX-b.left)/b.width*W;
+    const i = Math.max(0, Math.min(8, Math.round((sx-L)/iw*8)));
+    xh.setAttribute("x1", X(i)); xh.setAttribute("x2", X(i)); xh.setAttribute("opacity", 1);
+    showTip(`<div class="h">${i===0?"Inicio":"Cierre de S"+i}</div>`+row("Planeado", pct(plan[i]))+row("Real", real[i]!==undefined?pct(real[i]):"—"), e);
+  });
+  hit.addEventListener("mouseleave", () => { xh.setAttribute("opacity",0); hideTip(); });
+  $("curveLegend").innerHTML = `<span><svg width="26" height="10" aria-hidden="true"><line x1="0" x2="26" y1="5" y2="5" stroke="var(--plan)" stroke-width="2" stroke-dasharray="5 4"/></svg>Planeado</span><span><svg width="26" height="10" aria-hidden="true"><line x1="0" x2="26" y1="5" y2="5" stroke="var(--real)" stroke-width="2.5"/></svg>Real (hasta S${S.week})</span>`;
+}
+
+/* Detail dialog */
+const dlg = $("dlg");
+function openDlg(id){ UI.sel = id; UI.pending = null; renderDlg(); if(!dlg.open) dlg.showModal(); }
+function renderDlg(){
+  const a = byId(UI.sel); if(!a) return;
+  const st = status(a);
+  $("dlgTitle").textContent = `${a.id}. ${a.fase}`;
+  const unmet = a.dep.filter(d => byId(d).estado!=="Terminada");
+  let h = `<dl class="info">
+    <dt>Actividad</dt><dd>${esc(a.act)}</dd>
+    <dt>Responsable</dt><dd>${esc(a.resp)}</dd>
+    <dt>Prioridad</dt><dd><span class="prio ${a.prio}">${a.prio}</span>${a.prio==="Alta"?'<span class="crit-tag">★ Más crítica</span>':""}${CRIT.includes(a.id)?' <span class="crit-tag">· En ruta crítica</span>':""}</dd>
+    <dt>Duración</dt><dd>${a.dias} días hábiles</dd>
+    <dt>Fechas</dt><dd>${fmt(monday(a.ini))} al ${fmt(friday(a.fin))}</dd>
+    <dt>Estado</dt><dd>${badge(st)}</dd></dl>
+  <div class="block"><h4>Dependencias</h4><div class="deps">${a.dep.length ? a.dep.map(d => { const x = byId(d); return badge(status(x)).replace("</span>"+ICON[status(x)], "</span>#"+d+" "+ICON[status(x)]); }).join("") : '<span class="sub">No depende de otra actividad.</span>'}</div></div>
+  <div class="block"><h4>Cambiar estado</h4><div class="seg">${STATES.map(s=>`<button data-s="${s}" aria-pressed="${a.estado===s}">${ICON[s]} ${s}</button>`).join("")}</div></div>
+  <div class="block"><h4>Mover en el cronograma</h4><div class="stepper">
+    <div class="s"><span>Semana inicio</span><button data-m="ini" data-d="-1" aria-label="Restar una semana al inicio">−</button><output>S${a.ini}</output><button data-m="ini" data-d="1" aria-label="Sumar una semana al inicio">+</button></div>
+    <div class="s"><span>Semana fin</span><button data-m="fin" data-d="-1" aria-label="Restar una semana al fin">−</button><output>S${a.fin}</output><button data-m="fin" data-d="1" aria-label="Sumar una semana al fin">+</button></div>
+  </div></div>`;
+  if(UI.pending){
+    h += `<div class="warn" role="alert"><b>⚠ Atención:</b> la actividad ${a.id} depende de ${UI.pending.unmet.map(d=>"#"+d+" ("+esc(byId(d).fase)+")").join(", ")}, que aún no ${UI.pending.unmet.length>1?"están terminadas":"está terminada"}.
+      <div class="acts"><button class="btn primary" id="wGo">Continuar de todos modos</button><button class="btn" id="wNo">Cancelar</button></div></div>`;
+  }
+  $("dlgBody").innerHTML = h;
+  $("dlgBody").querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+    const s = b.dataset.s;
+    if(s===a.estado) return;
+    if(s!=="Pendiente" && unmet.length){ UI.pending = {s, unmet}; renderDlg(); return; }
+    a.estado = s; UI.pending = null; commit(); renderDlg();
+  }));
+  $("dlgBody").querySelectorAll(".stepper button").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.m, d = +b.dataset.d;
+    if(k==="ini") a.ini = Math.min(a.fin, Math.max(1, a.ini+d));
+    else a.fin = Math.max(a.ini, Math.min(8, a.fin+d));
+    commit(); renderDlg();
+  }));
+  if(UI.pending){
+    $("wGo").addEventListener("click", () => { a.estado = UI.pending.s; UI.pending = null; commit(); renderDlg(); });
+    $("wNo").addEventListener("click", () => { UI.pending = null; renderDlg(); });
+  }
+}
+$("dlgX").addEventListener("click", () => dlg.close());
+dlg.addEventListener("close", () => setTimeout(hideTip, 0));
+dlg.addEventListener("click", e => { if(e.target===dlg) dlg.close(); });
+
+/* Global actions */
+function commit(){ save(); renderAll(); }
+function renderAll(){ renderHeader(); renderKPIs(); renderGantt(); renderFilters(); renderTable(); renderDonut(); renderBars(); renderCurve(); }
+
+$("startDate").addEventListener("change", e => { if(e.target.value){ S.start = e.target.value; commit(); } });
+$("wkPrev").addEventListener("click", () => { if(S.week>1){ S.week--; commit(); } });
+$("wkNext").addEventListener("click", () => { if(S.week<8){ S.week++; commit(); } });
+$("bSim").addEventListener("click", () => {
+  S.acts.forEach(a => { if(a.fin < S.week) a.estado = "Terminada"; else if(a.ini <= S.week) a.estado = "En progreso"; });
+  commit();
+});
+$("bCrit").addEventListener("click", () => { UI.crit = !UI.crit; $("bCrit").setAttribute("aria-pressed", UI.crit); renderGantt(); });
+$("bPres").addEventListener("click", () => {
+  const on = document.body.classList.toggle("present");
+  $("bPres").setAttribute("aria-pressed", on);
+  $("bPres").querySelector("span").textContent = on ? "Salir de presentación" : "Modo presentación";
+});
+document.addEventListener("keydown", e => { if(e.key==="Escape" && document.body.classList.contains("present") && !dlg.open) $("bPres").click(); });
+$("bTheme").addEventListener("click", () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme ? root.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = dark ? "light" : "dark";
+  try{ localStorage.setItem(KEY+"-theme", root.dataset.theme); }catch(e){}
+});
+$("bReset").addEventListener("click", () => {
+  if(confirm("¿Reiniciar el tablero? Se perderán los estados y cambios de semanas guardados.")){ S = fresh(); UI.crit=false; $("bCrit").setAttribute("aria-pressed", false); commit(); }
+});
+$("bCsv").addEventListener("click", () => {
+  const head = ["#","Fase","Actividad / Tarea","Responsable","Prioridad","Depende de","Duración (días)","Semana inicio","Semana fin","Fecha inicio","Fecha entrega","Estado"];
+  const q = v => '"'+String(v).replace(/"/g,'""')+'"';
+  const lines = [head.map(q).join(";")].concat(S.acts.map(a => [a.id,a.fase,a.act,a.resp,a.prio,a.dep.join(", ")||"—",a.dias,"S"+a.ini,"S"+a.fin,fmt(monday(a.ini)),fmt(friday(a.fin)),status(a)].map(q).join(";")));
+  const blob = new Blob(["﻿"+lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob), link = document.createElement("a");
+  link.href = url; link.download = "Cronograma_SGSI_UTS.csv"; document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+});
+$("fResp").addEventListener("change", e => { UI.resp = e.target.value; renderTable(); });
+$("fQ").addEventListener("input", e => { UI.q = e.target.value; renderTable(); });
+
+renderAll();
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { renderBars(); renderCurve(); }, 120); });
+})();
+</script>
+</body>
+</html>
